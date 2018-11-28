@@ -13,34 +13,41 @@ struct DatabaseManager {
     private static var flowerSnapshot:DataSnapshot = DataSnapshot()
     
     
-    
-    // MARK:- Save user info to firebase database
-    static func saveUserInfo(userName:String, phone:String){
-        let user = users.child(AuthManager.getUserId()!)
-        user.child("name").setValue(userName)
-        user.child("phone").setValue(phone)
-        user.child("address").setValue("No ADDRESS")
+    // set new flower in firebase database
+    static func pushFlower(flower:Flower){
+        let flowerDb = flowers.childByAutoId()
+        flowerDb.setValue([ FlowerKeysNames.id:flower.productId
+            , FlowerKeysNames.name:flower.name
+            , FlowerKeysNames.category:flower.category
+            , FlowerKeysNames.price:flower.price
+            , FlowerKeysNames.photo:flower.photo
+            , FlowerKeysNames.instructions:flower.instructions])
     }
     
-    static func saveDeviceToken() {
-        users.child(AuthManager.getUserId()!).child("device_token").setValue("")
+   
+    
+    /// MARK:- remove flower
+    
+    static func remove(flower:Flower) {
+        if let key = getKey(id: flower.productId) {
+            flowers.child(key).removeValue()
+            StorageManager.removePhoto(photo: flower.photo )
+        }
+        
     }
     
-    // set address in firebase database
-    static func saveAddress(address:String){
-        users.child(AuthManager.getUserId()!).child("address").setValue(address)
-    }
     
-    // MARK:- save order in database
-    static func saveOrder(order:Order){
-        let dbOrder = orders.childByAutoId()
-        dbOrder.setValue([ OrderKeysNames.id:dbOrder.key!,
-                           OrderKeysNames.name:order.flowerName,
-                           OrderKeysNames.payment:order.payment,
-                           OrderKeysNames.discount:order.discount,
-                           OrderKeysNames.price:order.totalPrice,
-                           OrderKeysNames.quantity:order.quantity,
-                           OrderKeysNames.status:order.status])
+    static func getKey(id:Int) -> String? {
+        if let data = flowerSnapshot.value as? [String:AnyObject] {
+            for item in data{
+                let value = item.value
+                let flowerid = value[FlowerKeysNames.id] as! Int
+                if id == flowerid {
+                    return item.key
+                }
+            }
+        }
+        return ""
     }
     
     
@@ -82,51 +89,7 @@ struct DatabaseManager {
         orders.child(order.id).removeValue();
     }
     
-    // MARK:- get orders list
-    static func getOrdersList(completion:@escaping (_ ordersList:[Order])->()){
-        
-         orders.observeSingleEvent(of: .value) { (snapshot) in
-             var orders:[Order] = []
-             if let data = snapshot.value as? [String:AnyObject] {
-                 for value in data.values {
-                         let id = value[OrderKeysNames.id] as! String
-                         let name = value[OrderKeysNames.name] as! String
-                         let payment = value[OrderKeysNames.payment] as! String
-                         let status = value[OrderKeysNames.status] as! Bool
-                         let price = (value[OrderKeysNames.price] as! NSNumber).floatValue
-                         let quantity = (value[OrderKeysNames.quantity] as! NSNumber).intValue
-                         let discount = (value[OrderKeysNames.discount] as! NSNumber).intValue
-                         orders.append(Order(id: id, flowerName: name, payment: payment, quantity: quantity, status: status, totalPrice: price, discount: discount))
-                }
-                completion(orders)
-            }
-         }
-       ////
-    }
-    
-    /// MARK:- remove flower
-    
-    static func remove(flower:Flower) {
-        if let key = getKey(id: flower.productId) {
-            flowers.child(key).removeValue()
-            StorageManager.removePhoto(child: "flowers/"+flower.photo )
-        }
 
-    }
-    
-    
-    static func getKey(id:Int) -> String? {
-        
-        if let data = flowerSnapshot.value as? [String:AnyObject] {
-            for value in data.values {
-                let flowerid = value[FlowerKeysNames.id] as! Int
-                if id == flowerid {
-                    return value.key
-                }
-            }
-        }
-        return ""
-    }
     
 }
 

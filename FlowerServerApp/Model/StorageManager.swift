@@ -25,12 +25,17 @@ struct StorageManager {
         
     }
     
-    
-    static func removePhoto(child:String){
-        root.child(child).delete(completion: nil)
+    static func addPhoto(photo:String,image:UIImage)->Bool{
+        if let data = UIImagePNGRepresentation(image) {
+            root.child("flowers/\(photo)").putData(data)
+            return true
+        }
+        return false
     }
     
-    
-    
+    static func removePhoto(photo:String){
+        root.child("flowers/\(photo)").delete(completion: nil)
+    }
+
     
 }

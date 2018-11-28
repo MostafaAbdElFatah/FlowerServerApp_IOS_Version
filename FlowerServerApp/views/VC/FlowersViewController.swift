@@ -19,8 +19,12 @@ class FlowersViewController: UIViewController {
         AuthManager.signIn { (message) in
             self.showAlert(title: "Auth Error", message: message)
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
         self.loadData()
     }
+    
     private func loadData(){
         DatabaseManager.getFlowersList { (flowers) in
             self.flowersList += flowers
@@ -69,16 +73,14 @@ extension FlowersViewController:UITableViewDelegate, UITableViewDataSource {
     // Override to support editing the table view.
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            self.deleteFlower(row: indexPath.row)
+            self.deleteFlower(indexPath: indexPath )
         }
     }
     
-    private func deleteFlower(row:Int){
-        
+    private func deleteFlower(indexPath:IndexPath){
         let alert = UIAlertController(title: "Deleting", message: "Are you sure you want to delete this Flower", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { (alertAction) in
-            let indexPath = IndexPath(row: row, section: 0)
             // Delete the row from the data source
             DatabaseManager.remove(flower: self.flowersList[indexPath.row])
             self.flowersList.remove(at: indexPath.row)
@@ -86,5 +88,4 @@ extension FlowersViewController:UITableViewDelegate, UITableViewDataSource {
         }))
         self.present(alert, animated: true, completion: nil)
     }
-    
 }
